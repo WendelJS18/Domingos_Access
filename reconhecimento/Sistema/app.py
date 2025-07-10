@@ -44,7 +44,9 @@ def ping_dispositivo():
         traceback.print_exc()
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-
+                            ##      #www
+                             ########ww
+                             ##      #www
 def gerar_user_id():
     id_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ultimo_id.txt")
 
