@@ -18,9 +18,9 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 
-DEVICE_IP = '192.168.137.2'
+DEVICE_IP = '123.456.789.10'
 USERNAME = 'admin'
-PASSWORD = 'Esdo2025'
+PASSWORD = '123456'
 
 api = IntelbrasAccessControlAPI(DEVICE_IP, USERNAME, PASSWORD)
 api.testar_comunicacao()
