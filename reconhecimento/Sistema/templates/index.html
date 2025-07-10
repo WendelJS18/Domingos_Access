@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Usuário - Intelbras</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f3f3f3; padding: 30px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; }
+        label { display: block; margin-top: 15px; }
+        input, button { width: 100%; padding: 10px; margin-top: 5px; }
+        button { background-color: #0066cc; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #004999; }
+        video { width: 100%; margin-top: 15px; border-radius: 10px; }
+        .response { margin-top: 20px; padding: 10px; background: #e8f5e9; border: 1px solid #a5d6a7; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Cadastro de Usuário</h2>
+        <form id="userForm">
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" required>
+
+            <label for="senha">Senha:</label>
+            <input type="text" id="senha" name="senha" value="1234">
+
+            <label>Imagem da Câmera:</label>
+            <video id="camera" autoplay playsinline></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+
+            <button type="submit">Cadastrar Usuário</button>
+        </form>
+
+        <div class="response" id="resposta"></div>
+    </div>
+
+    <script>
+        let video = document.getElementById("camera");
+        let canvas = document.getElementById("canvas");
+        let stream;
+
+        
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(s => {
+                stream = s;
+                video.srcObject = s;
+            })
+            .catch(err => {
+                alert("Erro ao acessar a câmera: " + err.message);
+            });
+
+        document.getElementById("userForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const nome = document.getElementById("nome").value;
+            const senha = document.getElementById("senha").value;
+
+            if (!video.videoWidth) {
+                alert("A câmera ainda não carregou. Aguarde alguns segundos.");
+                return;
+            }
+
+            
+            const cadastro = await fetch("/cadastrar_usuario", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome, senha })
+            });
+
+            const cadastroData = await cadastro.json();
+
+            if (cadastroData.status !== "sucesso") {
+                alert("Erro ao cadastrar usuário: " + cadastroData.mensagem);
+                return;
+            }
+
+            const userID = cadastroData.mensagem.UserID;
+
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+            const base64 = canvas.toDataURL("image/jpeg").split(',')[1];
+
+            const envioFoto = await fetch("/enviar_foto_dispositivo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: userID, photo_base64: base64 })
+            });
+
+            const fotoData = await envioFoto.json();
+
+            const respostaDiv = document.getElementById("resposta");
+            respostaDiv.style.display = "block";
+            respostaDiv.innerText = `Usuário criado com ID: ${userID}\nResultado do envio de foto: ${fotoData.resultado || fotoData.erro}`;
+        });
+    </script>
+</body>
+</html>
